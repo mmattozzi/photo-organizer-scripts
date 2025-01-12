@@ -4,6 +4,7 @@ import sys
 import shutil
 import argparse
 import hashlib
+import re
 
 def calculate_md5(file_path):
     hash_md5 = hashlib.md5()
@@ -12,7 +13,7 @@ def calculate_md5(file_path):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
-def verify_directory_contents(source_dir, dest_dir):
+def verify_directory_contents(source_dir, dest_dir, ignore_pattern):
     print(f"Verifying files in {source_dir} are present in {dest_dir}")
 
     source_files = dict()
@@ -20,11 +21,13 @@ def verify_directory_contents(source_dir, dest_dir):
     not_found = []
     files_verified = 0
 
+    ignore_regex = re.compile(ignore_pattern)
+
     print(f"Scanning source directory: {source_dir}")
     files_processed = 0
     for root, dirs, files in os.walk(source_dir):
-        for file in files:
-            if file.startswith('.'):
+        for file in files:            
+            if file.startswith('.') or ignore_regex.match(file):
                 continue
             source_file_path = os.path.join(root, file)
             file_md5 = calculate_md5(source_file_path)
@@ -63,6 +66,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Recursively verify that every photo in source_dir is present somewhere in dest_dir.")
     parser.add_argument('-s', '--source_dir', required=True, help="Source directory containing photos")
     parser.add_argument('-d', '--dest_dir', required=True, help="Destination directory to copy organized photos")
+    parser.add_argument("-i", "--ignore", help="Ignore source files matching the given pattern")
     
     args = parser.parse_args()
-    verify_directory_contents(args.source_dir, args.dest_dir)
+    verify_directory_contents(args.source_dir, args.dest_dir, args.ignore)
