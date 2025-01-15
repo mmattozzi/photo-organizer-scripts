@@ -21,15 +21,19 @@ def verify_directory_contents(source_dir, dest_dir, ignore_pattern):
     not_found = []
     files_verified = 0
 
-    ignore_regex = re.compile(ignore_pattern)
+    ignore_regex = None
+    if ignore_pattern:
+        ignore_regex = re.compile(ignore_pattern)
 
     print(f"Scanning source directory: {source_dir}")
     files_processed = 0
     for root, dirs, files in os.walk(source_dir):
         for file in files:            
-            if file.startswith('.') or ignore_regex.match(file):
+            if file.startswith('.'):
                 continue
             source_file_path = os.path.join(root, file)
+            if ignore_pattern and ignore_regex.search(source_file_path):
+                continue
             file_md5 = calculate_md5(source_file_path)
             source_files[file_md5] = source_file_path
             files_processed += 1
@@ -56,10 +60,16 @@ def verify_directory_contents(source_dir, dest_dir, ignore_pattern):
             files_verified += 1
         else:
             not_found.append(source_file_path)
+            for dest_md5, dest_file_path in dest_file.items():
+                dest_file_name = os.path.basename(dest_file_path)
+                if dest_file_name == os.path.basename(source_file_path):
+                    print(f"File {source_file_path} not found in destination directory, but a file with the same name was found: {dest_file_path}")
+                    break
 
     print(f"Files not found: {len(not_found)}")
     for file in not_found:
         print(f"File not found: {file}")
+
 
 
 if __name__ == "__main__":
