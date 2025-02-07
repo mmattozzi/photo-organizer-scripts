@@ -5,6 +5,8 @@ import shutil
 import argparse
 import hashlib
 
+FILE_TYPES = [ "jpg", "JPG", "jpeg", "JPEG", "mp4", "MP4", "mov", "MOV" ]
+
 def calculate_64bit_hash(file_path):
     sha256_hash = hashlib.sha256()
     with open(file_path, "rb") as f:
@@ -25,8 +27,12 @@ def process_directory_contents(source_dir, dest_dir, move):
     for file in os.listdir(source_dir):
         file_path = os.path.join(source_dir, file)
         if os.path.isfile(file_path):
+            
             if file.startswith('.'):
                 continue
+            if not any(file.endswith(file_type) for file_type in FILE_TYPES):
+                continue
+
             print(f"Found file: {file_path}")
             exiftool_result = subprocess.run(['exiftool', '-CreateDate', '-FileModifyDate', file_path], capture_output=True, text=True)
             
@@ -98,8 +104,12 @@ def process_directory_contents(source_dir, dest_dir, move):
         for file_path in not_copied_exists:
             print(file_path)
 
+    return files_copied
+
 def process_subdirs(source_dir, dest_dir, move=False):
     process_directory_contents(source_dir, dest_dir, move)
+
+    files_copied = 0
 
     for file in os.listdir(source_dir):
         if file.startswith('.') or "Thumbs" == file:
@@ -107,8 +117,10 @@ def process_subdirs(source_dir, dest_dir, move=False):
         full_path = os.path.join(source_dir, file)
         if os.path.isdir(full_path):
             print(f"Processing directory: {full_path}")
-            process_directory_contents(full_path, dest_dir, move)        
+            files_copied += process_directory_contents(full_path, dest_dir, move)        
             process_subdirs(full_path, dest_dir, move)
+
+    return files_copied
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Organize photos by date.")
@@ -118,7 +130,10 @@ if __name__ == "__main__":
     parser.add_argument('-m', '--move', action='store_true', help="Move files instead of copying them")
 
     args = parser.parse_args()
+    files_copied = 0
     if not args.recurse:
-        process_directory_contents(args.source_dir, args.dest_dir, args.move)
+        files_copied = process_directory_contents(args.source_dir, args.dest_dir, args.move)
     else:
-        process_subdirs(args.source_dir, args.dest_dir, args.move)
+        files_copied = process_subdirs(args.source_dir, args.dest_dir, args.move)
+
+    print(f"Total files copied: {files_copied}")
