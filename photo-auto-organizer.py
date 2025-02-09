@@ -70,7 +70,7 @@ def process_directory_contents(source_dir, dest_dir, move):
                     if move:
                         shutil.move(file_path, dest_file_path)
                     else:
-                        shutil.copy2(file_path, dest_file_path)
+                        shutil.copy(file_path, dest_file_path)
                     files_copied += 1
                 else:
                     print(f"File already exists: {dest_file_path}")
@@ -84,7 +84,7 @@ def process_directory_contents(source_dir, dest_dir, move):
                         if move:
                             shutil.move(file_path, dest_file_path)
                         else:
-                            shutil.copy2(file_path, dest_file_path)
+                            shutil.copy(file_path, dest_file_path)
                         files_copied += 1
 
                     not_copied_exists.append(file_path)
