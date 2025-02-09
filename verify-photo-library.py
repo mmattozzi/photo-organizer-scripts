@@ -41,7 +41,7 @@ def detect_faces(image_path):
     return len(faces) > 0
 
 
-def verify_directory_contents(source_dir, dest_dir, ignore_pattern, faces_only):
+def verify_directory_contents(source_dir, dest_dir, ignore_pattern, faces_only, quiet):
     print(f"Verifying files in {source_dir} are present in {dest_dir}")
 
     source_files = dict()
@@ -70,10 +70,11 @@ def verify_directory_contents(source_dir, dest_dir, ignore_pattern, faces_only):
                     files_with_faces += 1
             
             files_processed += 1
-            if faces_only:
-                print(f"\rFiles scanned: {files_processed} - Found {files_with_faces} files with faces", end="")
-            else:
-                print(f"\rFiles scanned: {files_processed}", end="")
+            if not quiet:
+                if faces_only:
+                    print(f"\rFiles scanned: {files_processed} - Found {files_with_faces} files with faces", end="")
+                else:
+                    print(f"\rFiles scanned: {files_processed}", end="")
 
     print();
     print(f"Found {len(source_files)} unique files in source directory")
@@ -87,7 +88,8 @@ def verify_directory_contents(source_dir, dest_dir, ignore_pattern, faces_only):
             file_md5 = calculate_md5(dest_file_path)
             dest_file[file_md5] = dest_file_path
             files_processed += 1
-            print(f"\rFiles scanned: {files_processed}", end="")
+            if not quiet:
+                print(f"\rFiles scanned: {files_processed}", end="")
     
     print();
     print(f"Found {len(dest_file)} unique files in destination directory")
@@ -115,6 +117,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--dest_dir', required=True, help="Destination directory to copy organized photos")
     parser.add_argument("-i", "--ignore", help="Ignore source files matching the given pattern")
     parser.add_argument("--faces-only", action="store_true", help="Only check for files that are likely to contain faces")
+    parser.add_argument("-q", "--quiet", action="store_true", help="Suppress progress output")
     
     args = parser.parse_args()
-    verify_directory_contents(args.source_dir, args.dest_dir, args.ignore, args.faces_only)
+    verify_directory_contents(args.source_dir, args.dest_dir, args.ignore, args.faces_only, args.quiet)
