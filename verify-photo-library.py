@@ -28,7 +28,7 @@ def detect_faces(image_path):
     # Read the image
     img = cv2.imread(image_path)
     if img is None:
-        print("Error: Could not read image.")
+        print("Error: Could not read image: {image_path}")
         return
 
     # Convert to grayscale
