@@ -17,7 +17,7 @@ def calculate_64bit_hash(file_path):
     lower_64_bits = int.from_bytes(full_digest[-8:], byteorder='big')
     return f"{lower_64_bits:016x}"
 
-def process_directory_contents(source_dir, dest_dir, move):
+def process_directory_contents(source_dir, dest_dir, move, days):
     print(f"Copying files from {source_dir} to {dest_dir}")
 
     not_copied_no_date = []
@@ -61,8 +61,18 @@ def process_directory_contents(source_dir, dest_dir, move):
                 if not os.path.exists(dest_year_month_dir):
                     os.makedirs(dest_year_month_dir)
                     print(f"Created directory: {dest_year_month_dir}")
-                
+
+                dated_path = dest_year_month_dir
                 dest_file_path = os.path.join(dest_year_month_dir, file)
+                
+                if days:
+                    dest_year_month_day_dir = os.path.join(dest_year_month_dir, day)
+                    if not os.path.exists(dest_year_month_day_dir):
+                        os.makedirs(dest_year_month_day_dir)
+                        print(f"Created directory: {dest_year_month_day_dir}")
+                    dated_path = dest_year_month_day_dir
+                    dest_file_path = os.path.join(dest_year_month_day_dir, file)
+                
                 action = "Moving" if move else "Copying"
                 print(f"{action} {file_path} to {dest_file_path}")
 
@@ -79,7 +89,7 @@ def process_directory_contents(source_dir, dest_dir, move):
                     if not hash64 == dest_hash64:
                         print(f"File already exists but is different: {dest_file_path}")
                         file_name, file_ext = os.path.splitext(file)
-                        dest_file_path = os.path.join(dest_year_month_dir, f"{file_name}_{hash64}{file_ext}")
+                        dest_file_path = os.path.join(dated_path, f"{file_name}_{hash64}{file_ext}")
                         print(f"Saving to: {dest_file_path}")
                         if move:
                             shutil.move(file_path, dest_file_path)
@@ -128,12 +138,13 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--dest_dir', required=True, help="Destination directory to copy organized photos")
     parser.add_argument('-r', '--recurse', action='store_true', help="Recurse into subdirectories")
     parser.add_argument('-m', '--move', action='store_true', help="Move files instead of copying them")
+    parser.add_argument('--days', action='store_true', help="Organize by day in addition to month")
 
     args = parser.parse_args()
     files_copied = 0
     if not args.recurse:
-        files_copied = process_directory_contents(args.source_dir, args.dest_dir, args.move)
+        files_copied = process_directory_contents(args.source_dir, args.dest_dir, args.move, args.days)
     else:
-        files_copied = process_subdirs(args.source_dir, args.dest_dir, args.move)
+        files_copied = process_subdirs(args.source_dir, args.dest_dir, args.move, args.days)
 
     print(f"Total files copied: {files_copied}")
